@@ -266,3 +266,11 @@ describe('ping', function () {
         });
     });
 });
+
+describe('disconnect', function () {
+    it('can disconnect to properly end tests', function (done) {
+        riak.disconnect();
+        done();
+    });
+});
+riak.disconnect();

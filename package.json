@@ -11,6 +11,9 @@
     "mocha": "~1.6.0",
     "should": "~1.2.0"
   },
+  "scripts": {
+    "test": "node test"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com:nathan-lafreniere/riakpbc.git"
