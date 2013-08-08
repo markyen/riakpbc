@@ -1,5 +1,5 @@
 var net = require('net'),
-    protobuf = require('protobuf.js'),
+    protobuf = require('protobufjs'),
     butils = require('butils'),
     EventEmitter = require('events').EventEmitter,
     path = require('path');
@@ -54,7 +54,7 @@ function RiakPBC(options) {
     self.host = options.host || '127.0.0.1';
     self.port = options.port || 8087;
     self.bucket = options.bucket || undefined;
-    self.translator = protobuf.loadSchema(path.join(__dirname, './spec/riak_kv.proto'));
+    self.builder = protobuf.protoFromFile(path.join(__dirname, './spec/riak_kv.proto'));
     self.client = new net.Socket();
     self.connected = false;
     self.client.on('end', self.disconnect);
@@ -85,6 +85,8 @@ function RiakPBC(options) {
         }
     }
 
+    var msg;
+
     self.client.on('data', function (chunk) {
         splitPacket(chunk);
         if (numBytesAwaiting > 0) {
@@ -92,34 +94,35 @@ function RiakPBC(options) {
         }
         resBuffers.forEach(function (packet) {
             mc = messageCodes['' + packet[0]];
+            if (mc === 'RpbSetClientIdResp') mc = 'RpbSetClientIdReq';
+            if (packet.length === 1)
+                return finish();
 
-            var response = self.translator.decode(mc, packet.slice(1));
-            if (response.content && Array.isArray(response.content)) {
-                response.content.map(function (item) {
-                    if (item.value && item.content_type) {
-                        if (item.content_type.match(/^(text\/\*)|(application\/json)$/)) item.value = item.value.toString();
-                    }
-                    return item;
-                });
-            }
+            msg = self.builder.build(mc);
+            var response = msg.decode(packet.slice(1));
 
             if (self.task.emitter && !response.done) {
                 self.task.emitter.emit('data', response);
             }
 
             reply = _merge(reply, response);
-            if (!self.task.expectMultiple || reply.done || mc === 'RpbErrorResp') {
+            if (!self.task.expectMultiple || reply.done || mc === 'RpbErrorResp') return finish();
+
+            function finish() {
                 if (self.task.emitter) {
                     self.task.emitter.emit('end', response);
                 } else {
                     self.task.callback(reply);
                 }
+                msg = undefined;
+                response = undefined;
                 mc = undefined;
                 self.task = undefined;
                 reply = {};
                 self.paused = false;
                 self.processNext();
             }
+
         });
     });
 
@@ -138,8 +141,12 @@ function _merge(obj1, obj2) {
     var obj = {};
     if (obj2.hasOwnProperty('phase')) {
         obj = obj1;
-        if (obj[obj2.phase] === undefined) obj[obj2.phase] = [];
-        obj[obj2.phase] = obj[obj2.phase].concat(JSON.parse(obj2.response));
+        if (obj2.phase !== null) {
+            if (obj[obj2.phase] === undefined) obj[obj2.phase] = [];
+            obj[obj2.phase] = obj[obj2.phase].concat(JSON.parse(obj2.response));
+        } else {
+            if (obj2.done) obj.done = obj2.done;
+        }
     } else {
         [obj1, obj2].forEach(function (old) {
             Object.keys(old).forEach(function (key) {
@@ -159,18 +166,30 @@ function _merge(obj1, obj2) {
 RiakPBC.prototype.makeRequest = function (type, data, callback, expectMultiple, emitter) {
     var self = this,
         reply = {},
-        buffer = this.translator.encode(type, data),
-        message = [];
+        buffer,
+        msg,
+        message;
+
+    if (type !== 'RpbGetClientIdReq' && type !== 'RpbPingReq' && type !== 'RpbGetServerInfoReq') {
+        msg = self.builder.build(type);
+        buffer = new msg(data);
+        buffer = buffer.toBuffer();
+    } else {
+        buffer = { length: 0 };
+    }
+
+    message = new Buffer(buffer.length + 5);
 
     butils.writeInt32(message, buffer.length + 1);
     butils.writeInt(message, messageCodes[type], 4);
-    message = message.concat(buffer);
-    self.queue.push({ message: new Buffer(message), callback: callback, expectMultiple: expectMultiple, emitter: emitter });
+    if (Buffer.isBuffer(buffer)) buffer.copy(message, 5);
+
+    self.queue.push({ message: message, callback: callback, expectMultiple: expectMultiple, emitter: emitter });
     process.nextTick(self.processNext);
 };
 
 RiakPBC.prototype.getBuckets = function (callback) {
-    this.makeRequest('RpbListBucketsReq', null, callback);
+    this.makeRequest('RpbListBucketsReq', {}, callback);
 };
 
 RiakPBC.prototype.getBucket = function (params, callback) {

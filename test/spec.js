@@ -22,7 +22,6 @@ exports.ping = function (test) {
         test.done();
     });
 };
-
 exports.getServerInfo = function (test) {
     client.getServerInfo(function (reply) {
         test.equal(reply.errmsg, undefined);
@@ -188,7 +187,7 @@ exports.search = function (test) {
 
 
 exports.counters = function (test) {
-    client.updateCounter({ bucket: 'test', key: 'counter'  }, function (reply) {
+    client.updateCounter({ bucket: 'test', key: 'counter', amount: 0  }, function (reply) {
         test.notEqual(reply, undefined);
         client.getCounter({ bucket: 'test', key: 'counter' }, function (reply) {
             test.notEqual(reply, undefined);
@@ -196,9 +195,9 @@ exports.counters = function (test) {
             client.updateCounter({ bucket: 'test', key: 'counter', amount: 100, returnvalue: true }, function (reply) {
                 test.notEqual(reply, undefined);
                 test.equal(reply.value, 100);
-                client.updateCounter({ bucket: 'test', key: 'counter', returnvalue: true }, function (reply) {
+                client.getCounter({ bucket: 'test', key: 'counter' }, function (reply) {
                     test.notEqual(reply, undefined);
-                    //test.equal(reply.value, 100);
+                    test.equal(reply.value, 100);
                     test.done();
                 });
             });
@@ -215,8 +214,7 @@ exports.secondaryIndexPaging = function (test) {
                 request = {
                     bucket: 'test',
                     key: key,
-                    content_type: 'application/json',
-                    content: {value: JSON.stringify(payload), indexes: indexes}
+                    content: {value: JSON.stringify(payload), indexes: indexes, content_type: 'application/json'}
                 };
             client.put(request, function (reply) {
                 test.notEqual(reply, undefined);

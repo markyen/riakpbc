@@ -32,26 +32,26 @@ option java_outer_classname = "RiakPB";
 
 // Error response - may be generated for any Req
 message RpbErrorResp {
-    required bytes errmsg = 1;
+    required string errmsg = 1;
     required uint32 errcode = 2;
 }
 
 // Get server info request - no message defined, just send RpbGetServerInfoReq message code
 message RpbGetServerInfoResp {
-    optional bytes node = 1;
-    optional bytes server_version = 2;
+    optional string node = 1;
+    optional string server_version = 2;
 }
 
 // Key/value pair - used for user metadata, indexes, search doc fields
 message RpbPair {
-    required bytes key = 1;
-    optional bytes value = 2;
+    required string key = 1;
+    optional string value = 2;
 }
 
 
 // Get bucket properties request
 message RpbGetBucketReq {
-    required bytes bucket = 1;
+    required string bucket = 1;
 }
 
 // Get bucket properties response
@@ -61,7 +61,7 @@ message RpbGetBucketResp {
 
 // Set bucket properties request
 message RpbSetBucketReq {
-    required bytes bucket = 1;
+    required string bucket = 1;
     required RpbBucketProps props = 2;
 }
 
@@ -70,7 +70,7 @@ message RpbSetBucketReq {
 
 // Reset bucket properties request
 message RpbResetBucketReq {
-    required bytes bucket = 1;
+    required string bucket = 1;
 }
 
 // Reset bucket properties response - no message defined, just send
@@ -79,15 +79,15 @@ message RpbResetBucketReq {
 // Module-Function pairs for commit hooks and other bucket properties
 // that take functions
 message RpbModFun {
-    required bytes module = 1;
-    required bytes function = 2;
+    required string module = 1;
+    required string function = 2;
 }
 
 // A commit hook, which may either be a modfun or a JavaScript named
 // function
 message RpbCommitHook {
     optional RpbModFun modfun = 1;
-    optional bytes name = 2;
+    optional string name = 2;
 }
 
 // Bucket properties
@@ -118,7 +118,7 @@ message RpbBucketProps {
     optional bool notfound_ok = 21;
 
     // Used by riak_kv_multi_backend
-    optional bytes backend = 22;
+    optional string backend = 22;
 
     // Used by riak_search bucket fixup
     optional bool search = 23;

@@ -4,8 +4,8 @@
   "description": "a very rough and basic riak protobuf client",
   "main": "index.js",
   "dependencies": {
-    "protobuf.js": ">=0.0.18",
-    "butils": "0.0.5"
+    "butils": "0.0.5",
+    "protobufjs": "~1.1.4"
   },
   "devDependencies": {
     "nodeunit": "",
