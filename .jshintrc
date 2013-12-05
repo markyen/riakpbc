@@ -1,10 +1,11 @@
 {
+    "indent": 2,
     "asi": false,
     "expr": true,
     "loopfunc": true,
     "curly": false,
     "evil": true,
-    "white": true,
+    "white": false,
     "undef": true,
     "browser": true,
     "predef": [
