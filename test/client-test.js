@@ -12,6 +12,17 @@ var savedKeys = {}
 
 describe('Client test', function () {
 
+  beforeEach(function (done) {
+    var start = new Date().getTime()
+    client = riakpbc.createClient()
+    client.connect(function (err) {
+      expect(err, 'connect error').to.not.exist
+      var end = new Date().getTime()
+      var duration = end - start
+      done()
+    })
+  })
+
   after(function (done) {
     async.each(Object.keys(savedKeys), deleteKey, done)
   })
@@ -24,10 +35,13 @@ describe('Client test', function () {
   })
 
   it('getClientId', function (done) {
-    client.getClientId(function (err, reply) {
+    client.setClientId({ client_id: 'testrunner' }, function (err, reply) {
       expect(err).to.not.exist
-      expect(reply.client_id).to.equal('testrunner')
-      done()
+      client.getClientId(function (err, reply) {
+        expect(err).to.not.exist
+        expect(reply.client_id).to.equal('testrunner')
+        done()
+      })
     })
   })
 
@@ -212,7 +226,8 @@ describe('Client test', function () {
   })
 
   it('putLarge', function (done) {
-    this.slow('.5s')
+    this.slow('5s')
+    this.timeout('10s')
     var bucket = 'test'
     var value = {}, i;
     for (i = 0; i < 5000; i += 1) {
