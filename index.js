@@ -155,8 +155,12 @@ function RiakPBC(options) {
     if (stream && !response.done) {
       self.task.stream.write(response);
     }
-
-    reply = merge(reply, response);
+    if (stream) {
+      reply = response;
+    }
+    else {
+      reply = merge(reply, response);
+    }
     if (isLastResponse(reply)) {
       outputResponse(reply);
       self.task = undefined;
