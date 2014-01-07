@@ -110,54 +110,52 @@ RiakPBC.prototype._processPacket = function (chunk) {
 
 RiakPBC.prototype._processAllResBuffers = function () {
     var self = this;
-    var stream = self.task.stream;
-    var cb = self.task.callback;
-    var mc, err;
 
-    self.resBuffers.forEach(processSingleResBuffer);
+    self.resBuffers.forEach(self._processSingleResBuffer.bind(this));
 
-    if (!self.task.expectMultiple || self.reply.done || mc === 'RpbErrorResp') {
-        self.task = undefined;
-
-        if (stream) {
-            stream.end();
-        } else {
-            cb(err, self.reply);
+    if (!self.task.expectMultiple || self.reply.done || self.task.mc === 'RpbErrorResp') {
+        if (self.task.stream) {
+            self.task.stream.end();
         }
 
-        mc = undefined;
+        if (self.task.callback) {
+            self.task.callback(self.task.err, self.reply);
+        }
+
+        self.task = undefined;
         self.reply = {};
         self.paused = false;
         self._processNext();
     }
+};
 
-    function processSingleResBuffer(packet) {
-        var response;
+RiakPBC.prototype._processSingleResBuffer = function (packet) {
+    var self = this;
+    var response;
 
-        mc = messageCodes['' + packet[0]];
-        response = self.translator.decode(mc, packet.slice(1));
-        if (response.content && Array.isArray(response.content)) {
-            response.content.forEach(parseContent);
+    self.task.mc = messageCodes['' + packet[0]];
+    response = self.translator.decode(self.task.mc, packet.slice(1));
+    if (response.content && Array.isArray(response.content)) {
+        response.content.forEach(parseContent);
+    }
+
+    if (response.errmsg) {
+        self.task.err = new Error(response.errmsg);
+        self.task.err.code = response.errcode;
+        if (self.task.stream) {
+            self.task.stream.emit('error', self.task.err);
+            return;
         }
+    }
 
-        if (response.errmsg) {
-            err = new Error(response.errmsg);
-            err.code = response.errcode;
-            if (stream) {
-                stream.emit('error', err);
-                return;
-            }
-        }
+    if (self.task.stream && !response.done) {
+        self.task.stream.write(response);
+    }
 
-        if (stream && !response.done) {
-            stream.write(response);
-        }
-
-        if (stream) {
-            self.reply = response;
-        } else {
-            self.reply = _merge(self.reply, response);
-        }
+    if (self.task.stream) {
+        self.reply = response;
+    } else {
+        self.reply = _merge(self.reply, response);
     }
 };
 
@@ -314,7 +312,9 @@ RiakPBC.prototype.mapred = function (params, streaming, callback) {
             });
         });
 
-        callback(null, rows);
+        if (typeof callback === 'function') {
+            callback(null, rows);
+        }
     }
 
     if (typeof streaming === 'function') {
