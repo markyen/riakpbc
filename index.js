@@ -8,51 +8,6 @@ var path = require('path');
 var _merge = require('./lib/merge');
 var parseResponse = require('./lib/parse-response');
 
-var messageCodes = {
-    '0': 'RpbErrorResp',
-    '1': 'RpbPingReq',
-    '2': 'RpbPingResp',
-    '3': 'RpbGetClientIdReq',
-    '4': 'RpbGetClientIdResp',
-    '5': 'RpbSetClientIdReq',
-    '6': 'RpbSetClientIdResp',
-    '7': 'RpbGetServerInfoReq',
-    '8': 'RpbGetServerInfoResp',
-    '9': 'RpbGetReq',
-    '10': 'RpbGetResp',
-    '11': 'RpbPutReq',
-    '12': 'RpbPutResp',
-    '13': 'RpbDelReq',
-    '14': 'RpbDelResp',
-    '15': 'RpbListBucketsReq',
-    '16': 'RpbListBucketsResp',
-    '17': 'RpbListKeysReq',
-    '18': 'RpbListKeysResp',
-    '19': 'RpbGetBucketReq',
-    '20': 'RpbGetBucketResp',
-    '21': 'RpbSetBucketReq',
-    '22': 'RpbSetBucketResp',
-    '23': 'RpbMapRedReq',
-    '24': 'RpbMapRedResp',
-    '25': 'RpbIndexReq',
-    '26': 'RpbIndexResp',
-    '27': 'RpbSearchQueryReq',
-    '28': 'RpbSearchQueryResp',
-    // 1.4
-    '29': 'RpbResetBucketReq',
-    '30': 'RpbResetBucketResp',
-    '40': 'RpbCSBucketReq',
-    '41': 'RpbCSBucketResp',
-    '50': 'RpbCounterUpdateReq',
-    '51': 'RpbCounterUpdateResp',
-    '52': 'RpbCounterGetReq',
-    '53': 'RpbCounterGetResp',
-};
-
-Object.keys(messageCodes).forEach(function (key) {
-    messageCodes[messageCodes[key]] = Number(key);
-});
-
 function RiakPBC(options) {
     var self = this;
     options = options || {};
@@ -136,7 +91,7 @@ RiakPBC.prototype._processAllResBuffers = function () {
     function processSingleResBuffer(packet) {
         var response;
 
-        mc = messageCodes['' + packet[0]];
+        mc = riakproto.codes['' + packet[0]];
 
         response = self.translator.decode(mc, packet.slice(1));
         if (response) {
@@ -227,7 +182,7 @@ RiakPBC.prototype.makeRequest = function (opts) {
     }
 
     butils.writeInt32(message, buffer.length + 1);
-    butils.writeInt(message, messageCodes[type], 4);
+    butils.writeInt(message, riakproto.codes[type], 4);
     message = message.concat(Array.prototype.slice.call(buffer));
     queueOpts = {
         message: new Buffer(message),

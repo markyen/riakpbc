@@ -7,7 +7,7 @@
     "protobuf.js": "~1.1.0",
     "butils": "0.0.7",
     "through": "~2.3.4",
-    "riakproto": "~1.4.6"
+    "riakproto": "2.0.0-preview"
   },
   "devDependencies": {
     "nodeunit": "",
