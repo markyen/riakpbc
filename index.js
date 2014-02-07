@@ -117,7 +117,7 @@ RiakPBC.prototype.makeRequest = function (opts) {
     message.writeInt32BE(buffer.length + 1, 0);
     message.writeInt8(riakproto.codes[opts.type], 4);
     buffer.copy(message, 5);
-    
+
     this.queue.push({
         message: message,
         callback: opts.callback,
@@ -289,6 +289,38 @@ RiakPBC.prototype.ping = function (callback) {
     return this.makeRequest({
         type: 'RpbPingReq',
         params: null,
+        callback: callback
+    });
+};
+
+RiakPBC.prototype.setBucketType = function (params, callback) {
+    return this.makeRequest({
+        type: 'RpbSetBucketTypeReq',
+        params: params,
+        callback: callback
+    });
+};
+
+RiakPBC.prototype.getBucketType = function (params, callback) {
+    return this.makeRequest({
+        type: 'RpbGetBucketTypeReq',
+        params: params,
+        callback: callback
+    });
+};
+
+RiakPBC.prototype.updateDtype = function (params, callback) {
+    return this.makeRequest({
+        type: 'DtUpdateReq',
+        params: params,
+        callback: callback
+    });
+};
+
+RiakPBC.prototype.fetchDtype = function (params, callback) {
+    return this.makeRequest({
+        type: 'DtFetchReq',
+        params: params,
         callback: callback
     });
 };
