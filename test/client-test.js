@@ -203,8 +203,7 @@ describe('Client test', function () {
                 range_min: '!',
                 range_max: '~'
             };
-            var streaming = true;
-            var readStream = client.getIndex(opts, streaming);
+            var readStream = client.getIndex(opts);
             var dataHandlerSpy = sinon.spy(dataHandler);
             readStream.on('data', dataHandlerSpy);
             readStream.on('end', endHandler);
@@ -358,11 +357,10 @@ describe('Client test', function () {
 
 
     it('getKeys streaming', function (done) {
-        var streaming = true;
         var keysFound = 0;
         var readStream = client.getKeys({
             bucket: 'test'
-        }, streaming);
+        });
         readStream.on('data', dataHandler);
         readStream.on('end', endHandler);
 
@@ -448,7 +446,7 @@ describe('Client test', function () {
             request: JSON.stringify(request),
             content_type: 'application/json',
         };
-        var readStream = client.mapred(opts, true);
+        var readStream = client.mapred(opts);
 
         var dataHandlerSpy = sinon.spy(dataHandler);
         readStream.on('data', dataHandlerSpy);
@@ -632,7 +630,7 @@ describe('Client test', function () {
             client.put(request, function (err, reply) {
                 expect(err).to.not.exist;
                 expect(reply).to.exist;
-                cb();
+                cb(err);
             });
         }
 
@@ -688,6 +686,66 @@ describe('Client test', function () {
                         done();
                     });
                 });
+            });
+        });
+    });
+    it('secondaryIndexPagingStreaming', function (done) {
+        var bucket = 'paging_test';
+        var ids = [0, 1, 2];
+        function saveRow(id, cb) {
+            var indexRow = {
+                key: 'value_bin',
+                value: String(id)
+            };
+            var key = 'test-paging-' + id;
+            var payload = {
+                value: id
+            };
+            var indexes = [indexRow];
+            var request = {
+                bucket: bucket,
+                key: key,
+                content: {
+                    content_type: 'application/json',
+                    value: JSON.stringify(payload),
+                    indexes: indexes
+                }
+            };
+
+            savedKeys[key] = bucket;
+
+
+            client.put(request, function (err, reply) {
+                expect(err).to.not.exist;
+                expect(reply).to.exist;
+                cb(err);
+            });
+        }
+
+        async.eachSeries(ids, saveRow, function (err) {
+            expect(err).to.not.exist;
+            var cursor, results = {};
+
+            var stream = client.getIndex({
+                bucket: bucket,
+                index: 'value_bin',
+                qtype: 1,
+                range_min: '0',
+                range_max: '3',
+                max_results: 2
+            });
+            stream.on('data', function (reply) {
+                expect(reply).to.exist;
+                if (reply.continuation) {
+                    results.continuation = reply.continuation;
+                }
+                results.keys = (results.keys || []).concat(reply.keys);
+            });
+            stream.on('end', function (reply) {
+                expect(results.keys, 'keys not set in results').to.exist;
+                expect(results.keys.length).to.equal(3);
+                expect(results.continuation, 'continuation not set in end reply').to.exist;
+                done();
             });
         });
     });
