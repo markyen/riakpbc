@@ -3,6 +3,10 @@ REPORTER?=spec
 GROWL?=--growl
 FLAGS=$(GROWL) --reporter $(REPORTER) --colors
 
+dt-setup:
+	riak-admin bucket-type create dt-test-set '{"props":{"datatype":"set","allow_mult":"true"}}'
+	riak-admin bucket-type activate dt-test-set
+
 test:
 	$(MOCHA) $(shell find test -name "*-test.js") $(FLAGS)
 

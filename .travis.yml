@@ -3,13 +3,14 @@ node_js:
   - "0.10"
 
 before_install:
-  - "curl http://apt.basho.com/gpg/basho.apt.key | sudo apt-key add -"
-  - 'sudo bash -c "echo deb http://apt.basho.com $(lsb_release -sc) main > /etc/apt/sources.list.d/basho.list"'
-  - "sudo apt-get update"
-  - "yes n | sudo apt-get install riak --force-yes"
-  - "./bin/enable-riak-search.sh"
+  - "sudo apt-get purge riak"
+  - "curl -sO http://s3.amazonaws.com/downloads.basho.com/riak/2.0/2.0.0pre11/ubuntu/precise/riak_2.0.0pre11-1_amd64.deb"
+  - "sudo dpkg -i riak_2.0.0pre11-1_amd64.deb"
+  - 'sudo sed -i.bak -e s/"storage_backend = bitcask"/"storage_backend = leveldb"/g /etc/riak/riak.conf'
+  - 'sudo sed -i.bak -e s/"search = off"/"search = on"/g /etc/riak/riak.conf'
   - "sudo service riak start"
+  - "sudo make dt-setup"
 
 before_script:
-  - sudo /usr/sbin/search-cmd install test
-  - sudo /usr/sbin/search-cmd install search_test
+  # - sudo /usr/sbin/search-cmd install test
+  # - sudo /usr/sbin/search-cmd install search_test
