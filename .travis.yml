@@ -3,6 +3,7 @@ node_js:
   - "0.10"
 
 before_install:
+  - "sudo apt-get purge riak"
   - "curl -sO http://s3.amazonaws.com/downloads.basho.com/riak/2.0/2.0.0pre11/ubuntu/precise/riak_2.0.0pre11-1_amd64.deb"
   - "sudo dpkg -i riak_2.0.0pre11-1_amd64.deb"
   - 'sudo sed -i.bak -e s/"storage_backend = bitcask"/"storage_backend = leveldb"/g /etc/riak/riak.conf'

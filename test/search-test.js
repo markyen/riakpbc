@@ -67,7 +67,7 @@ describe('Search', function () {
                 expect(reply.index[0]).to.be.have.property('schema', schema.name);
                 done();
             });
-        }, 1000); // wait for solr to create its index
+        }, 3000); // wait for solr to create its index
     });
 
     describe('search for docs', function () {
