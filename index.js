@@ -325,6 +325,46 @@ RiakPBC.prototype.fetchDtype = function (params, callback) {
     });
 };
 
+RiakPBC.prototype.ykGetIndex = function (params, callback) {
+    return this.makeRequest({
+        type: 'RpbYokozunaIndexGetReq',
+        params: params,
+        callback: callback
+    });
+};
+
+RiakPBC.prototype.ykPutIndex = function (params, callback) {
+    return this.makeRequest({
+        type: 'RpbYokozunaIndexPutReq',
+        params: params,
+        callback: callback
+    });
+};
+
+RiakPBC.prototype.ykDeleteIndex = function (params, callback) {
+    return this.makeRequest({
+        type: 'RpbYokozunaIndexDeleteReq',
+        params: params,
+        callback: callback
+    });
+};
+
+RiakPBC.prototype.ykPutSchema = function (params, callback) {
+    return this.makeRequest({
+        type: 'RpbYokozunaSchemaPutReq',
+        params: params,
+        callback: callback
+    });
+};
+
+RiakPBC.prototype.ykGetSchema = function (params, callback) {
+    return this.makeRequest({
+        type: 'RpbYokozunaSchemaGetReq',
+        params: params,
+        callback: callback
+    });
+};
+
 RiakPBC.prototype.connect = function (callback) {
     this.connection.connect(callback);
 };

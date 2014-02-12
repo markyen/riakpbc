@@ -27,6 +27,9 @@ describe('DataTypes', function () {
                     }
                 }
             }, function (err, reply) {
+                if (err && err.message.indexOf('Error no bucket type') !== -1) {
+                    throw new Error('Please run "make dt-setup" before running tests');
+                }
                 expect(err).to.not.exist;
                 expect(reply.set_value).to.exist;
                 expect(reply.set_value).to.contain('someSetValue');
