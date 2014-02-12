@@ -470,7 +470,7 @@ describe('Client test', function () {
 
     it('counters', function (done) {
         var currentValue = 3;
-        var bucket = 'test';
+        var bucket = 'test-' + Date.now();
         var key = 'counter';
         savedKeys[key] = bucket;
         var setOpts = {
@@ -479,8 +479,8 @@ describe('Client test', function () {
             amount: currentValue
         };
         var getOpts = {
-            bucket: 'test',
-            key: 'counter'
+            bucket: bucket,
+            key: key
         };
         var promise;
         try {
@@ -533,7 +533,7 @@ describe('Client test', function () {
                 bucket: 'test'
             }, function (err, reply) {
                 expect(reply).to.exist;
-                expect(reply.props.allow_mult).to.be.false;
+                expect(reply.props.allow_mult).to.be.true; // allow_mult=true is default in riak 2.0
                 done();
             });
         });

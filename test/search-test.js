@@ -12,7 +12,7 @@ var client = riakpbc.createClient({ host: 'localhost', port: 8087 });
 
 var numRows = 10;
 var bucket = 'search_test';
-describe('search', function searchSuite() {
+describe.skip('search', function searchSuite() {
     this.slow('1s');
     before(function beforeBlock(done) {
         var promise = connectClient();
