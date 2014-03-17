@@ -10,6 +10,7 @@ before_install:
   - 'sudo sed -i.bak -e s/"search = off"/"search = on"/g /etc/riak/riak.conf'
   - "sudo service riak start"
   - "sudo make dt-setup"
+  - "sleep 10"
 
 before_script:
   # - sudo /usr/sbin/search-cmd install test

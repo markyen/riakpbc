@@ -2,6 +2,7 @@ var Stream = require('stream');
 var Protobuf = require('protobuf.js');
 var riakproto = require('riakproto');
 var _merge = require('./lib/merge');
+var quorum = require('./lib/quorum');
 var parseResponse = require('./lib/parse-response');
 var ConnectionManager = require('./lib/connection-manager');
 
@@ -17,7 +18,6 @@ function RiakPBC(options) {
 
     this.translator = new Protobuf(riakproto);
 
-    this.paused = false;
     this.queue = [];
     this.reply = {};
 }
@@ -28,22 +28,30 @@ RiakPBC.prototype._processMessage = function (data) {
     messageCode = riakproto.codes['' + data[0]];
     response = this.translator.decode(messageCode, data.slice(1));
 
-    if (response) {
-        response = parseResponse(response);
-
-        if (response.errmsg) {
-            err = new Error(response.errmsg);
-            err.code = response.errcode;
-
-            if (this.task.callback) {
-                this.task.callback(err);
-            } else {
-                this.task.stream.emit('error', err);
-            }
-
-            this._cleanup();
-            return;
+    if (!response) {
+        if (this.task.callback) {
+            this.task.callback(new Error('Failed to decode response message'));
+        } else {
+            this.task.stream.emit('error', new Error('Failed to decode response message'));
         }
+        this._cleanup();
+        return;
+    }
+
+    response = parseResponse(response);
+
+    if (response.errmsg) {
+        err = new Error(response.errmsg);
+        err.code = response.errcode;
+
+        if (this.task.callback) {
+            this.task.callback(err);
+        } else {
+            this.task.stream.emit('error', err);
+        }
+
+        this._cleanup();
+        return;
     }
 
     if (response.done) {
@@ -51,21 +59,18 @@ RiakPBC.prototype._processMessage = function (data) {
         delete response.done;
     }
 
-    if (Object.keys(response).length) {
+    if (this.task.callback) {
+        this.reply = _merge(this.reply, response);
+    } else if (Object.keys(response).length) {
         this.task.stream.write(response);
     }
 
-    if (this.task.callback) {
-        this.reply = _merge(this.reply, response);
-    }
-
     if (done || !this.task.expectMultiple || messageCode === 'RpbErrorResp') {
-        this.task.stream.end();
-
         if (this.task.callback) {
             this.task.callback(undefined, this.reply);
+        } else {
+            this.task.stream.end();
         }
-
         this._cleanup();
     }
 };
@@ -73,37 +78,30 @@ RiakPBC.prototype._processMessage = function (data) {
 RiakPBC.prototype._cleanup = function () {
     this.task = undefined;
     this.reply = {};
-    this.paused = false;
     this._processNext();
 };
 
 RiakPBC.prototype._processNext = function () {
-    if (!this.queue.length || this.paused) {
+    if (!this.queue.length || this.task) {
         return;
     }
 
-    this.paused = true;
     this.task = this.queue.shift();
-
-    if (!this.task) {
-        return;
-    }
 
     this.connection.send(this.task.message, function (err) {
         if (err) {
-
             if (this.task.callback) {
-                return this.task.callback(err);
+                this.task.callback(err);
+            } else {
+                this.task.stream.emit('error', err);
             }
-
-            return this.task.stream.emit('error', err);
         }
     }.bind(this));
 };
 
 // RiakPBC.prototype.makeRequest = function (type, data, callback, expectMultiple, streaming) {
 RiakPBC.prototype.makeRequest = function (opts) {
-    var buffer, message, stream;
+    var buffer, message, stream = null;
 
     if (riakproto.messages[opts.type]) {
         buffer = this.translator.encode(opts.type, opts.params);
@@ -112,7 +110,10 @@ RiakPBC.prototype.makeRequest = function (opts) {
     }
 
     message = new Buffer(buffer.length + 5);
-    stream = writableStream();
+
+    if (typeof opts.callback !== 'function') {
+        stream = writableStream();
+    }
 
     message.writeInt32BE(buffer.length + 1, 0);
     message.writeInt8(riakproto.codes[opts.type], 4);
@@ -120,7 +121,7 @@ RiakPBC.prototype.makeRequest = function (opts) {
 
     this.queue.push({
         message: message,
-        callback: opts.callback,
+        callback: typeof opts.callback === 'function' ? opts.callback : null,
         expectMultiple: opts.expectMultiple,
         stream: stream
     });
@@ -147,6 +148,10 @@ RiakPBC.prototype.getBucket = function (params, callback) {
 };
 
 RiakPBC.prototype.setBucket = function (params, callback) {
+    if (params.props) {
+        params.props = quorum.convert(params.props);
+    }
+
     return this.makeRequest({
         type: 'RpbSetBucketReq',
         params: params,
@@ -387,6 +392,10 @@ function writableStream() {
 }
 
 function parseMapReduceStream(rawStream) {
+    if (!rawStream) {
+        return null;
+    }
+
     var liner = new Stream.Transform({ objectMode: true });
 
     liner._transform = function (chunk, encoding, done) {
