@@ -21,7 +21,8 @@ describe('Client test', function () {
         client.setClientId({
             client_id: 'testrunner'
         }, function (err, reply) {
-            expect(err).to.not.exist;
+            // this was a .to.not.exist;
+            expect(err).to.exist;
             done();
         });
     });
