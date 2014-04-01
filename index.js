@@ -31,7 +31,7 @@ RiakPBC.prototype._processMessage = function (data) {
     if (!response) {
         err = new Error('Failed to decode response message');
 
-        return this._cleanup(err);
+        return _cleanup(this, err);
     }
 
     response = parseResponse(response);
@@ -40,7 +40,7 @@ RiakPBC.prototype._processMessage = function (data) {
         err = new Error(response.errmsg);
         err.code = response.errcode;
 
-        return this._cleanup(err);
+        return _cleanup(this, err);
     }
 
     if (response.done) {
@@ -55,24 +55,24 @@ RiakPBC.prototype._processMessage = function (data) {
     }
 
     if (done || !this.task.expectMultiple || messageCode === 'RpbErrorResp') {
-        this._cleanup(undefined, this.reply);
+        _cleanup(this, undefined, this.reply);
     }
 };
 
-RiakPBC.prototype._cleanup = function (err, reply) {
+var _cleanup = function (self, err, reply) {
     var callback, stream;
 
-    setImmediate(this._processNext.bind(this));
+    setImmediate(_processNext, self);
 
-    this.reply = {};
+    self.reply = {};
 
-    if (this.task.callback) {
-        callback = this.task.callback;
-        this.task = undefined;
+    if (self.task.callback) {
+        callback = self.task.callback;
+        self.task = undefined;
         callback(err, reply);
     } else {
-        stream = this.task.stream;
-        this.task = undefined;
+        stream = self.task.stream;
+        self.task = undefined;
         if (err) {
             stream.emit('error', err);
         } else {
@@ -81,22 +81,22 @@ RiakPBC.prototype._cleanup = function (err, reply) {
     }
 };
 
-RiakPBC.prototype._processNext = function () {
-    if (!this.queue.length || this.task) {
+var _processNext = function (self) {
+    if (!self.queue.length || self.task) {
         return;
     }
 
-    this.task = this.queue.shift();
+    self.task = self.queue.shift();
 
-    this.connection.send(this.task.message, function (err) {
+    self.connection.send(self.task.message, function (err) {
         if (err) {
-            if (this.task.callback) {
-                this.task.callback(err);
+            if (self.task.callback) {
+                self.task.callback(err);
             } else {
-                this.task.stream.emit('error', err);
+                self.task.stream.emit('error', err);
             }
         }
-    }.bind(this));
+    });
 };
 
 // RiakPBC.prototype.makeRequest = function (type, data, callback, expectMultiple, streaming) {
@@ -126,7 +126,7 @@ RiakPBC.prototype.makeRequest = function (opts) {
         stream: stream
     });
 
-    setImmediate(this._processNext.bind(this));
+    setImmediate(_processNext, this);
 
     return stream;
 };
