@@ -1,22 +1,14 @@
-MOCHA?=node_modules/.bin/mocha
-REPORTER?=spec
-GROWL?=--growl
-FLAGS=$(GROWL) --reporter $(REPORTER) --colors
-
 dt-setup:
 	riak-admin bucket-type create dt-test-set '{"props":{"datatype":"set","allow_mult":"true"}}'
 	riak-admin bucket-type activate dt-test-set
 
 test:
-	$(MOCHA) $(shell find test -name "*-test.js") $(FLAGS)
+	@node node_modules/lab/bin/lab
 
-one:
-	$(MOCHA) $(NAME) $(FLAGS)
+test-cov:
+	@node node_modules/lab/bin/lab -t 100
 
-unit:
-	$(MOCHA) $(shell find test/unit -name "*-test.js") $(FLAGS)
+test-cov-html:
+	@node node_modules/lab/bin/lab -r html -o coverage.html
 
-integration:
-	$(MOCHA) $(shell find test/integration -name "*-test.js") $(FLAGS)
-
-.PHONY: test
+.PHONY: test test-cov test-cov-html

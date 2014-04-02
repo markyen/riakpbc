@@ -29,13 +29,9 @@ RiakPBC.prototype._processMessage = function (data) {
     response = this.translator.decode(messageCode, data.slice(1));
 
     if (!response) {
-        if (this.task.callback) {
-            this.task.callback(new Error('Failed to decode response message'));
-        } else {
-            this.task.stream.emit('error', new Error('Failed to decode response message'));
-        }
-        this._cleanup();
-        return;
+        err = new Error('Failed to decode response message');
+
+        return this._cleanup(err);
     }
 
     response = parseResponse(response);
@@ -44,14 +40,7 @@ RiakPBC.prototype._processMessage = function (data) {
         err = new Error(response.errmsg);
         err.code = response.errcode;
 
-        if (this.task.callback) {
-            this.task.callback(err);
-        } else {
-            this.task.stream.emit('error', err);
-        }
-
-        this._cleanup();
-        return;
+        return this._cleanup(err);
     }
 
     if (response.done) {
@@ -66,42 +55,49 @@ RiakPBC.prototype._processMessage = function (data) {
     }
 
     if (done || !this.task.expectMultiple || messageCode === 'RpbErrorResp') {
-        if (this.task.callback) {
-            this.task.callback(undefined, this.reply);
-        } else {
-            this.task.stream.end();
-        }
-        this._cleanup();
+        this._cleanup(undefined, this.reply);
     }
 };
 
-RiakPBC.prototype._cleanup = function () {
-    this.task = undefined;
+RiakPBC.prototype._cleanup = function (err, reply) {
     this.reply = {};
+
+    if (this.task.callback) {
+        this.task.callback(err, reply);
+    } else {
+        if (err) {
+            this.task.stream.emit('error', err);
+        } else {
+            this.task.stream.end();
+        }
+    }
+
+    this.task = undefined;
     this._processNext();
 };
 
 RiakPBC.prototype._processNext = function () {
-    if (!this.queue.length || this.task) {
+    var self = this;
+    if (!self.queue.length || self.task) {
         return;
     }
 
-    this.task = this.queue.shift();
+    self.task = self.queue.shift();
 
-    this.connection.send(this.task.message, function (err) {
+    self.connection.send(self.task.message, function (err) {
         if (err) {
-            if (this.task.callback) {
-                this.task.callback(err);
+            if (self.task.callback) {
+                self.task.callback(err);
             } else {
-                this.task.stream.emit('error', err);
+                self.task.stream.emit('error', err);
             }
         }
-    }.bind(this));
+    });
 };
 
 // RiakPBC.prototype.makeRequest = function (type, data, callback, expectMultiple, streaming) {
 RiakPBC.prototype.makeRequest = function (opts) {
-    var buffer, message, stream = null;
+    var buffer, message, stream = null, cb = null;
 
     if (riakproto.messages[opts.type]) {
         buffer = this.translator.encode(opts.type, opts.params);
@@ -111,7 +107,14 @@ RiakPBC.prototype.makeRequest = function (opts) {
 
     message = new Buffer(buffer.length + 5);
 
-    if (typeof opts.callback !== 'function') {
+    if (typeof opts.callback === 'function') {
+        var _cb = opts.callback;
+        cb = function (_err, _reply) {
+            process.nextTick(function () {
+                _cb(_err, _reply);
+            });
+        };
+    } else {
         stream = writableStream();
     }
 
@@ -121,7 +124,7 @@ RiakPBC.prototype.makeRequest = function (opts) {
 
     this.queue.push({
         message: message,
-        callback: typeof opts.callback === 'function' ? opts.callback : null,
+        callback: cb,
         expectMultiple: opts.expectMultiple,
         stream: stream
     });
@@ -403,8 +406,8 @@ function parseMapReduceStream(rawStream) {
         var json = JSON.parse(response);
 
         json.forEach(function (row) {
-            this.push(row);
-        }.bind(this));
+            liner.push(row);
+        });
 
         done();
     };

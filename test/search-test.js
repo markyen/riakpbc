@@ -1,6 +1,10 @@
-var chai = require('chai');
-chai.Assertion.includeStack = true; // defaults to false
-var expect = chai.expect;
+var Lab = require('lab');
+var expect = Lab.expect;
+var describe = Lab.experiment;
+var it = Lab.test;
+var before = Lab.before;
+var after = Lab.after;
+
 var q = require('q');
 var _ = require('lodash-node');
 
@@ -40,8 +44,7 @@ describe('Search', function () {
         });
     });
 
-    it('create index', function (done) {
-        this.timeout(5000); // creating index may take some time
+    it('create index', {timeout: 5000}, function (done) {
         client.ykPutIndex({
             index: {
                 name: index,
@@ -53,8 +56,7 @@ describe('Search', function () {
         });
     });
 
-    it('get index', function (done) {
-        this.timeout(5000);
+    it('get index', {timeout: 5000}, function (done) {
         setTimeout(function () {
             client.ykGetIndex({
                 name: index,
