@@ -19,57 +19,59 @@ var schema = {
 
 describe('Search', function () {
 
-    it('create schema', function (done) {
-        client.ykPutSchema({
-            schema: {
+    describe('prepare', function () {
+        it('create schema', function (done) {
+            client.ykPutSchema({
+                schema: {
+                    name: schema.name,
+                    content: schema.content
+                }
+            }, function (err) {
+                expect(err).to.not.exist;
+                done();
+            });
+        });
+
+        it('get schema', function (done) {
+            client.ykGetSchema({
                 name: schema.name,
-                content: schema.content
-            }
-        }, function (err) {
-            expect(err).to.not.exist;
-            done();
-        });
-    });
-
-    it('get schema', function (done) {
-        client.ykGetSchema({
-            name: schema.name,
-        }, function (err, reply) {
-            expect(err).to.not.exist;
-            expect(reply).to.be.an('object');
-            expect(reply).to.have.property('schema');
-            expect(reply.schema).to.have.property('name', schema.name);
-            expect(reply.schema).to.have.property('content', schema.content.toString());
-            done();
-        });
-    });
-
-    it('create index', {timeout: 5000}, function (done) {
-        client.ykPutIndex({
-            index: {
-                name: index,
-                schema: schema.name
-            }
-        }, function (err) {
-            expect(err).to.not.exist;
-            done();
-        });
-    });
-
-    it('get index', {timeout: 5000}, function (done) {
-        setTimeout(function () {
-            client.ykGetIndex({
-                name: index,
             }, function (err, reply) {
                 expect(err).to.not.exist;
                 expect(reply).to.be.an('object');
-                expect(reply).to.have.property('index').that.is.an('array').and.have.length(1);
-                expect(reply.index[0]).to.be.an('object');
-                expect(reply.index[0]).to.be.have.property('name', index);
-                expect(reply.index[0]).to.be.have.property('schema', schema.name);
+                expect(reply).to.have.property('schema');
+                expect(reply.schema).to.have.property('name', schema.name);
+                expect(reply.schema).to.have.property('content', schema.content.toString());
                 done();
             });
-        }, 3000); // wait for solr to create its index
+        });
+
+        it('create index', {timeout: 5000}, function (done) {
+            client.ykPutIndex({
+                index: {
+                    name: index,
+                    schema: schema.name
+                }
+            }, function (err) {
+                expect(err).to.not.exist;
+                done();
+            });
+        });
+
+        it('get index', {timeout: 10000}, function (done) {
+            setTimeout(function () {
+                client.ykGetIndex({
+                    name: index,
+                }, function (err, reply) {
+                    expect(err).to.not.exist;
+                    expect(reply).to.be.an('object');
+                    expect(reply).to.have.property('index').that.is.an('array').and.have.length(1);
+                    expect(reply.index[0]).to.be.an('object');
+                    expect(reply.index[0]).to.be.have.property('name', index);
+                    expect(reply.index[0]).to.be.have.property('schema', schema.name);
+                    done();
+                });
+            }, 7000); // wait for solr to create its index
+        });
     });
 
     describe('search for docs', function () {

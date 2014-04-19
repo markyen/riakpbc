@@ -503,13 +503,18 @@ describe('Client test', function () {
             bucket: bucket,
             key: key
         };
-        var promise;
-        try {
-            promise = q.ninvoke(client, 'updateCounter', setOpts);
-        } catch (err) {
-            failHandler(err);
-        }
-        promise.then(function (reply) {
+
+        var bucketOpts = {
+            bucket: bucket,
+            props: {
+                allow_mult: true
+            }
+        };
+
+        return q.ninvoke(client, 'setBucket', bucketOpts)
+        .then(function () {
+            return q.ninvoke(client, 'updateCounter', setOpts);
+        }).then(function (reply) {
             expect(reply).to.exist;
         }).then(function () {
             var promise = q.ninvoke(client, 'getCounter', getOpts);
@@ -554,7 +559,7 @@ describe('Client test', function () {
                 bucket: 'test'
             }, function (err, reply) {
                 expect(reply).to.exist;
-                expect(reply.props.allow_mult).to.be.true; // allow_mult=true is default in riak 2.0
+                expect(reply.props.allow_mult).to.be.false;
                 done();
             });
         });
