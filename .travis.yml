@@ -9,7 +9,10 @@ before_install:
   - 'sudo sed -i.bak -e s/"storage_backend = bitcask"/"storage_backend = leveldb"/g /etc/riak/riak.conf'
   - 'sudo sed -i.bak -e s/"search = off"/"search = on"/g /etc/riak/riak.conf'
   - "sudo service riak start"
-  - "sudo make dt-setup"
+  # - "sudo make dt-setup"
+  # fix for beta1: see https://github.com/basho/riak/issues/487
+  - "sudo -H -u riak -i riak-admin bucket-type create dt-test-set '{\"props\":{\"datatype\":\"set\",\"allow_mult\":\"true\"}}'"
+  - "sudo -H -u riak -i riak-admin bucket-type activate dt-test-set"
   - "sleep 10"
 
 before_script:
