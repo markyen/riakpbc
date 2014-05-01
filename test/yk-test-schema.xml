@@ -6,12 +6,10 @@
 
     <!-- Needed by Yokozuna -->
     <field name="_yz_id" type="_yz_str" indexed="true" stored="true" required="true" />
-    <field name="_version_" type="long" indexed="true" stored="true"/>
     <field name="_yz_ed" type="_yz_str" indexed="true" stored="true"/>
     <field name="_yz_pn" type="_yz_str" indexed="true" stored="true"/>
     <field name="_yz_fpn" type="_yz_str" indexed="true" stored="true"/>
     <field name="_yz_vtag" type="_yz_str" indexed="true" stored="true"/>
-    <field name="_yz_node" type="_yz_str" indexed="true" stored="true"/>
     <field name="_yz_rb" type="_yz_str" indexed="true" stored="true"/>
     <field name="_yz_rk" type="_yz_str" indexed="true" stored="true"/>
     <field name="_yz_rt" type="_yz_str" indexed="true" stored="true"/>
@@ -22,8 +20,6 @@
 
   <types>
     <fieldType name="_yz_str" class="solr.StrField" sortMissingLast="true" />
-    <!-- <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0"/> -->
-    <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0"/>
 
     <!-- A text field that only splits on whitespace for exact matching of words -->
     <fieldType name="text_ws" class="solr.TextField" positionIncrementGap="100">
