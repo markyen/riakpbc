@@ -311,6 +311,10 @@ RiakPBC.prototype.startTls = function (callback) {
 };
 
 RiakPBC.prototype.auth = function (params, callback) {
+    if (!this.connection.secure) {
+        return callback(new Error('Cannot auth over non-secured connection'));
+    }
+
     return this.makeRequest({
         type: 'RpbAuthReq',
         params: params,
