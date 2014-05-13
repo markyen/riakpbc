@@ -15,6 +15,7 @@ function RiakPBC(options) {
 
     this.connection = new ConnectionManager(options);
     this.connection.receive = this._processMessage.bind(this);
+    this.connection.riak = this;
 
     this.translator = new Protobuf(riakproto);
 
