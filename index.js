@@ -119,7 +119,7 @@ RiakPBC.prototype.makeRequest = function (opts) {
     }
 
     message.writeInt32BE(buffer.length + 1, 0);
-    message.writeInt8(riakproto.codes[opts.type], 4);
+    message.writeUInt8(riakproto.codes[opts.type], 4);
     buffer.copy(message, 5);
 
     this.queue.push({
