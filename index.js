@@ -301,6 +301,22 @@ RiakPBC.prototype.ping = function (callback) {
     });
 };
 
+RiakPBC.prototype.startTls = function (callback) {
+    return this.makeRequest({
+        type: 'RpbStartTls',
+        params: null,
+        callback: callback
+    });
+};
+
+RiakPBC.prototype.auth = function (params, callback) {
+    return this.makeRequest({
+        type: 'RpbAuthReq',
+        params: params,
+        callback: callback
+    });
+};
+
 RiakPBC.prototype.setBucketType = function (params, callback) {
     return this.makeRequest({
         type: 'RpbSetBucketTypeReq',
