@@ -79,25 +79,41 @@ RiakPBC.prototype._cleanup = function (err, reply) {
 
 RiakPBC.prototype._processNext = function () {
     var self = this;
-    if (!self.queue.length || self.task) {
+
+    if ((self.connection.connecting && !self.connection.queue.length) ||
+        (!self.connection.queue.length && !self.queue.length) ||
+        self.task) {
         return;
     }
 
-    self.task = self.queue.shift();
+    var _error = function (err) {
+        if (self.task.callback) {
+            return self.task.callback(err);
+        }
+
+        self.task.stream.emit('error', err);
+    };
+
+    if (!self.connection.connected && self.connection.auto_connect) {
+        return self.connection.connect(function (err) {
+            if (err && self.queue.length) {
+                self.task = self.queue.shift();
+                _error(err);
+            }
+            self._processNext();
+        });
+    }
+
+    self.task = self.connection.queue.length ? self.connection.queue.shift() : self.queue.shift();
 
     self.connection.send(self.task.message, function (err) {
         if (err) {
-            if (self.task.callback) {
-                self.task.callback(err);
-            } else {
-                self.task.stream.emit('error', err);
-            }
+            _error(err);
         }
     });
 };
 
-// RiakPBC.prototype.makeRequest = function (type, data, callback, expectMultiple, streaming) {
-RiakPBC.prototype.makeRequest = function (opts) {
+RiakPBC.prototype._makeTask = function (opts) {
     var buffer, message, stream = null, cb = null;
 
     if (riakproto.messages[opts.type]) {
@@ -123,16 +139,22 @@ RiakPBC.prototype.makeRequest = function (opts) {
     message.writeUInt8(riakproto.codes[opts.type], 4);
     buffer.copy(message, 5);
 
-    this.queue.push({
+    return {
         message: message,
         callback: cb,
         expectMultiple: opts.expectMultiple,
         stream: stream
-    });
+    };
+};
 
+// RiakPBC.prototype.makeRequest = function (type, data, callback, expectMultiple, streaming) {
+RiakPBC.prototype.makeRequest = function (opts) {
+    var task = this._makeTask(opts);
+
+    this.queue.push(task);
     this._processNext();
 
-    return stream;
+    return task.stream;
 };
 
 RiakPBC.prototype.getBuckets = function (callback) {

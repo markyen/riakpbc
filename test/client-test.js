@@ -610,12 +610,21 @@ describe('Client test', function () {
             function connectCB(err) {
                 expect(err).to.exist;
                 expect(err.message).to.equal('Connection timeout');
-                client.getBuckets(function (err, reply) {
-                    expect(err).to.exist;
-                    expect(err.message).to.equal('Connection timeout');
-                    done();
-                });
+                done();
             }
+        });
+
+        it('times out when running a command', function (done) {
+            var client = riakpbc.createClient({
+                port: 1337,
+                timeout: 1
+            });
+
+            client.getBuckets(function (err, reply) {
+                expect(err).to.exist;
+                expect(err.message).to.equal('Connection timeout');
+                done();
+            });
         });
     });
 
