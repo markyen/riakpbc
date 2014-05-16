@@ -303,7 +303,7 @@ describe('Client test', function () {
     });
 
     it('getBuckets', function (done) {
-        client.getBuckets(function (err, reply) {
+        client.getBuckets(null, function (err, reply) {
             expect(err).to.not.exist;
             expect(reply).to.have.ownProperty('buckets');
             expect(reply.buckets).to.be.an('array');
@@ -620,7 +620,7 @@ describe('Client test', function () {
                 timeout: 1
             });
 
-            client.getBuckets(function (err, reply) {
+            client.getBuckets(null, function (err, reply) {
                 expect(err).to.exist;
                 expect(err.message).to.equal('Connection timeout');
                 done();

@@ -18,7 +18,7 @@ RiakPBC is a low-level [Riak 1.4](http://basho.com/riak)
   - [Usage](#usage)
   - [API](#api)
   - [Bucket Methods](#bucket-methods)
-    - [client.getBuckets(callback)](#clientgetbucketscallback)
+    - [client.getBuckets(params, callback)](#clientgetbucketsparams-callback)
     - [client.getBucket(params, callback)](#clientgetbucketparams-callback)
     - [client.setBucket(params, callback)](#clientsetbucketparams-callback)
     - [client.resetBucket(params, callback)](#clientresetbucketparams-callback)
@@ -90,14 +90,16 @@ set of parameters .  You should also be familiar with the Riak
 ## Bucket Methods
 
 
-### client.getBuckets(callback)
+### client.getBuckets(params, callback)
 [reference](http://docs.basho.com/riak/latest/dev/references/protocol-buffers/list-buckets/)
 
 This method retrieves a list of buckets available on the server.  You shouldn't
-run this in production.  This method takes no parameters, only a callback.
+run this in production. The `params` object should have only one key, `type`,
+and its value should be the bucket type name as a string.
+If `type` is `default`, The `param` object can be replaced `null`
 
 ```javascript
-client.getBuckets(function (err, reply) {
+client.getBuckets({ type: 'test' }, function (err, reply) {
   var buckets = reply.buckets;
   console.log('we have buckets:', buckets);
 });

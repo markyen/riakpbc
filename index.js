@@ -157,10 +157,10 @@ RiakPBC.prototype.makeRequest = function (opts) {
     return task.stream;
 };
 
-RiakPBC.prototype.getBuckets = function (callback) {
+RiakPBC.prototype.getBuckets = function (params, callback) {
     return this.makeRequest({
         type: 'RpbListBucketsReq',
-        params: null,
+        params: params,
         callback: callback
     });
 };
