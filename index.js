@@ -25,6 +25,11 @@ function RiakPBC(options) {
 }
 
 RiakPBC.prototype._processMessage = function (data) {
+
+    if (!this.task) {
+        return this._processNext();
+    }
+
     var response, messageCode, err, done;
 
     messageCode = riakproto.codes['' + data[0]];
@@ -127,11 +132,15 @@ RiakPBC.prototype._makeTask = function (opts) {
 
     if (typeof opts.callback === 'function') {
         var _cb = opts.callback;
+        var domain = process.domain;
         cb = function (_err, _reply) {
             process.nextTick(function () {
                 _cb(_err, _reply);
             });
         };
+        if (domain) {
+            cb = domain.bind(cb);
+        }
     } else {
         stream = writableStream();
     }
