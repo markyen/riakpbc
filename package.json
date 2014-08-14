@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "protobuf.js": "~1.1.2",
-    "riakproto": "2.0.0-beta"
+    "riakproto": "git://github.com/markyen/riakproto.git#2.0.0.16"
   },
   "devDependencies": {
     "lab": "^3.0.0",
