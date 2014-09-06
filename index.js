@@ -386,7 +386,7 @@ RiakPBC.prototype.fetchDtype = function (params, callback) {
     });
 };
 
-RiakPBC.prototype.ykGetIndex = function (params, callback) {
+RiakPBC.prototype.yzGetIndex = function (params, callback) {
     return this.makeRequest({
         type: 'RpbYokozunaIndexGetReq',
         params: params,
@@ -394,7 +394,7 @@ RiakPBC.prototype.ykGetIndex = function (params, callback) {
     });
 };
 
-RiakPBC.prototype.ykPutIndex = function (params, callback) {
+RiakPBC.prototype.yzPutIndex = function (params, callback) {
     return this.makeRequest({
         type: 'RpbYokozunaIndexPutReq',
         params: params,
@@ -402,7 +402,7 @@ RiakPBC.prototype.ykPutIndex = function (params, callback) {
     });
 };
 
-RiakPBC.prototype.ykDeleteIndex = function (params, callback) {
+RiakPBC.prototype.yzDeleteIndex = function (params, callback) {
     return this.makeRequest({
         type: 'RpbYokozunaIndexDeleteReq',
         params: params,
@@ -410,7 +410,7 @@ RiakPBC.prototype.ykDeleteIndex = function (params, callback) {
     });
 };
 
-RiakPBC.prototype.ykPutSchema = function (params, callback) {
+RiakPBC.prototype.yzPutSchema = function (params, callback) {
     return this.makeRequest({
         type: 'RpbYokozunaSchemaPutReq',
         params: params,
@@ -418,7 +418,7 @@ RiakPBC.prototype.ykPutSchema = function (params, callback) {
     });
 };
 
-RiakPBC.prototype.ykGetSchema = function (params, callback) {
+RiakPBC.prototype.yzGetSchema = function (params, callback) {
     return this.makeRequest({
         type: 'RpbYokozunaSchemaGetReq',
         params: params,

@@ -14,14 +14,14 @@ var bucket = 'test-search-bucket-' + Date.now();
 var index = 'test-search-index-' + Date.now();
 var schema = {
     name: 'test-search-schema-' + Date.now(),
-    content: require('fs').readFileSync(require('path').resolve(__dirname, './yk-test-schema.xml'))
+    content: require('fs').readFileSync(require('path').resolve(__dirname, './yz-test-schema.xml'))
 };
 
 describe('Search', function () {
 
     describe('prepare', function () {
         it('create schema', function (done) {
-            client.ykPutSchema({
+            client.yzPutSchema({
                 schema: {
                     name: schema.name,
                     content: schema.content
@@ -33,7 +33,7 @@ describe('Search', function () {
         });
 
         it('get schema', function (done) {
-            client.ykGetSchema({
+            client.yzGetSchema({
                 name: schema.name,
             }, function (err, reply) {
                 expect(err).to.not.exist;
@@ -46,7 +46,7 @@ describe('Search', function () {
         });
 
         it('create index', {timeout: 5000}, function (done) {
-            client.ykPutIndex({
+            client.yzPutIndex({
                 index: {
                     name: index,
                     schema: schema.name
@@ -59,7 +59,7 @@ describe('Search', function () {
 
         it('get index', {timeout: 10000}, function (done) {
             setTimeout(function () {
-                client.ykGetIndex({
+                client.yzGetIndex({
                     name: index,
                 }, function (err, reply) {
                     expect(err).to.not.exist;
